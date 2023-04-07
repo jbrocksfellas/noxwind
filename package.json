@@ -1,19 +1,19 @@
 {
-  "name": "noxtwind",
+  "name": "noxwind",
   "version": "1.0.0",
   "description": "A CLI tool to setup Full-Stack application faster",
-  "author": "Gaurav Singh",
   "exports": "./bin/index.js",
   "type": "module",
   "bin": {
     "noxtwind": "bin/index.js"
   },
   "license": "MIT",
+  "types": "./bin/index.d.ts",
   "scripts": {
-    "watch": "yarn tsc --watch",
     "dev": "concurrently \"yarn tsc --watch\" \"nodemon bin/index.js\"",
-    "start": "node build/index.js",
-    "build": "yarn tsc"
+    "start": "node bin/index.js",
+    "build": "yarn tsc",
+    "prepare": "yarn run build"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.3",
@@ -28,7 +28,19 @@
     "inquirer": "8.0.0",
     "yargs": "^17.7.1"
   },
+  "author": "Gaurav Singh <jbrocksfellas@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jbrocksfellas/noxwind.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jbrocksfellas/noxwind/issues"
+  },
+  "homepage": "https://github.com/jbrocksfellas/noxwind#readme",
   "engines": {
     "node": ">=14.16"
-  }
+  },
+  "files": [
+    "./bin/**/*"
+  ]
 }
