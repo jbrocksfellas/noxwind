@@ -1,6 +1,7 @@
 {
   "name": "noxtwind",
   "version": "1.0.0",
+  "description": "A CLI tool to setup Full-Stack application faster",
   "author": "Gaurav Singh",
   "exports": "./bin/index.js",
   "type": "module",
