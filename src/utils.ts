@@ -1,16 +1,30 @@
-export function parseSentence(words: string) {
-  var sentence = "";
-  for (var i = 1; i < words.length; i++) {
-    sentence = sentence + words[i] + " ";
-  }
+export function findViteTemplate(name: string, typescript: boolean): string {
+  const templates: any = {
+    React: "react",
+    Vue: "vue",
+    Vanilla: "vanilla",
+  };
+
+  if (typescript) return templates[name] + "-ts";
+  return templates[name];
 }
 
-const usage = "\nUsage: tran <lang_name> sentence to be translated";
+export function findFrontendFramework(stack: string): string {
+  const stacks: any = {
+    "MEAN Stack": "Angular",
+    "MERN Stack": "React",
+    "MEVN Stack": "Vue",
+  };
 
-export function showHelp() {
-  console.log(usage);
-  console.log("\nOptions:\r");
-  console.log("\t--version\t      " + "Show version number." + "\t\t" + "[boolean]\r");
-  console.log("    -l, --languages\t" + "      " + "List all languages." + "\t\t" + "[boolean]\r");
-  console.log("\t--help\t\t      " + "Show help." + "\t\t\t" + "[boolean]\n");
+  return stacks[stack];
+}
+
+export function findBackendLibraries(stack: string): Array<string> {
+  const libraries: any = {
+    "MEAN Stack": ["mongoose", "express"],
+    "MERN Stack": ["mongoose", "express"],
+    "MEVN Stack": ["mongoose", "express"],
+  };
+
+  return libraries[stack];
 }

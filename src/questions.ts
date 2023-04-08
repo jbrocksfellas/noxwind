@@ -25,7 +25,7 @@ const questions = async function () {
         name: "stack",
         message: "Select your stack",
         default: 0,
-        choices: ["MEAN Stack", "MERN Stack", "MEVN Stack", "Socket.io", "Custom Stack"],
+        choices: ["MEAN Stack", "MERN Stack", "MEVN Stack", "Custom Stack"],
       },
       {
         type: "list",
@@ -45,7 +45,7 @@ const questions = async function () {
           const frontend = answers.stack_type === "frontend";
           return fullStack || frontend;
         },
-        choices: ["Next.js", "React", "Gatsby", "Angular", "Vue", "Solid", "Quick", "Astro"],
+        choices: ["Next.js", "React", "Vue", "Angular", "Vanilla"],
       },
       {
         type: "list",
@@ -56,7 +56,7 @@ const questions = async function () {
           const backend = answers.stack_type === "backend";
           return fullStack || backend;
         },
-        choices: ["Express.js", "Nest.js", "Koa.js", "Meteor.js", "Sails.js", "Total.js", "Hapi.js"],
+        choices: ["Express.js"],
       },
       {
         type: "list",
@@ -84,7 +84,14 @@ const questions = async function () {
         },
         choices: ["Redis", "None"],
       },
-      { type: "confirm", name: "backend_auth_confirm", message: "Do you want to use an authentication library for backend?" },
+      {
+        type: "confirm",
+        name: "backend_auth_confirm",
+        message: "Do you want to use an authentication library for backend?",
+        when(answers) {
+          return answers.database;
+        },
+      },
       {
         type: "list",
         name: "backend_auth_library",
@@ -133,6 +140,25 @@ const questions = async function () {
       },
       {
         type: "confirm",
+        name: "css_confirm",
+        message: "Do you want to use a CSS framework?",
+        when(answers) {
+          const nextJs = answers.frontend_stack === "Next.js";
+
+          return nextJs;
+        },
+      },
+      {
+        type: "list",
+        name: "css_framework",
+        message: "Select your CSS library",
+        when(answers) {
+          return answers.css_confirm;
+        },
+        choices: ["tailwindcss"],
+      },
+      {
+        type: "confirm",
         name: "frontend_testing_confirm",
         message: "Do you want to use a testing framework for frontend?",
       },
@@ -145,10 +171,17 @@ const questions = async function () {
         },
         choices: ["Jest", "Jest + Enzyme", "Cypress + Mocha + Chai", "TestCafe + Mocha + Chai", "Karma + Jasmine", "Nightwat.js + Mocha + Chai"],
       },
-      { type: "confirm", name: "backend_testing_confirm", message: "Do you want to use a testing framework for backend?" },
+      {
+        type: "confirm",
+        name: "backend_testing_confirm",
+        message: "Do you want to use a testing framework for backend?",
+        when(answers) {
+          return answers.database;
+        },
+      },
       {
         type: "list",
-        name: "backend_testing_frameworks",
+        name: "backend_testing_framework",
         message: "Select your backend testing framework.",
         when(answers) {
           return answers.backend_testing_confirm;
@@ -157,8 +190,22 @@ const questions = async function () {
       },
       {
         type: "checkbox",
+        name: "additional_frontend_packages",
+        message: "Select additional frontend packages",
+        choices: [{ name: "yup" }, { name: "socket.io" }, { name: "axios" }, { name: "rxjs" }],
+      },
+      {
+        type: "checkbox",
         name: "additional_backend_packages",
         message: "Select additional backend packages",
+        when(answers) {
+          const meanStack = answers.stack === "MEAN Stack";
+          const mernStack = answers.stack === "MERN Stack";
+          const mevnStack = answers.stack === "MEVN Stack";
+          const backendStack = answers.stack_type && answers.stack_type !== "frontend";
+
+          return meanStack || mernStack || mevnStack || backendStack;
+        },
         choices: [
           { name: "cors" },
           { name: "dotenv" },
@@ -175,12 +222,6 @@ const questions = async function () {
           { name: "uuid" },
           { name: "rxjs" },
         ],
-      },
-      {
-        type: "checkbox",
-        name: "additional_frontend_packages",
-        message: "Select additional frontend packages",
-        choices: [{ name: "yup" }, { name: "socket.io" }, { name: "axios" }, { name: "rxjs" }],
       },
 
       // { type: "confirm", name: "frontend_validation_library_confirm", message: "Do you want to use a validation library for frontend?" },
