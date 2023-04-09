@@ -162,6 +162,14 @@ const questions = async function () {
         type: "confirm",
         name: "frontend_testing_confirm",
         message: "Do you want to use a testing framework for frontend?",
+        when(answers) {
+          const meanStack = answers.stack === "MEAN Stack";
+          const mernStack = answers.stack === "MERN Stack";
+          const mevnStack = answers.stack === "MEVN Stack";
+          const notBackend = answers.stack_type && answers.stack_type !== "backend";
+
+          return meanStack || mernStack || mevnStack || notBackend;
+        },
       },
       {
         type: "list",
@@ -200,6 +208,14 @@ const questions = async function () {
         type: "checkbox",
         name: "additional_frontend_packages",
         message: "Select additional frontend packages",
+        when(answers) {
+          const meanStack = answers.stack === "MEAN Stack";
+          const mernStack = answers.stack === "MERN Stack";
+          const mevnStack = answers.stack === "MEVN Stack";
+          const notBackend = answers.stack_type && answers.stack_type !== "backend";
+
+          return meanStack || mernStack || mevnStack || notBackend;
+        },
         choices: [{ name: "yup" }, { name: "socket.io-client" }, { name: "axios" }, { name: "rxjs" }],
       },
       {

@@ -4,6 +4,7 @@ import * as utils from "./utils.js";
 import { questions } from "./questions.js";
 import shell from "shelljs";
 import fs from "fs";
+import ProgressBar from "progress";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -39,19 +40,19 @@ questions()
 
     if (stack === "MEAN Stack") {
       createAngularApp(frontendName);
-      createNodeApp(backendName, ["express", "mongoose", "dotenv", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
+      createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else if (stack === "MERN Stack") {
       const frontendStack = utils.findFrontendFramework(stack);
       const template = utils.findViteTemplate(frontendStack, isTypescript);
 
       createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
-      createNodeApp(backendName, ["express", "mongoose", "dotenv", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
+      createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else if (stack === "MEVN Stack") {
       const frontendStack = utils.findFrontendFramework(stack);
       const template = utils.findViteTemplate(frontendStack, isTypescript);
 
       createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
-      createNodeApp(backendName, ["express", "mongoose", "dotenv", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
+      createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else {
       const stackType = answers.stackType;
       if (stackType === "frontend") {
@@ -74,16 +75,22 @@ questions()
             importAlias,
             frontendDevDependencies
           );
-        } else if (frontendStack === "React") {
-        } else if (frontendStack === "Vue") {
         } else if (frontendStack === "Angular") {
         } else {
+          const template = utils.findViteTemplate(frontendStack, isTypescript);
+
+          createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
         }
       } else if (stackType === "backend") {
         const backendStack = answers.backend_stack;
 
         if (backendStack === "Express.js") {
-          createNodeApp(backendName, ["express", "dotenv", ...answers.additional_backend_packages, answers.database], backendDevDependencies, isTypescript);
+          createNodeApp(
+            backendName,
+            ["express", "dotenv", "cors", ...answers.additional_backend_packages, answers.database],
+            backendDevDependencies,
+            isTypescript
+          );
         }
       } else {
         const frontendStack = answers.frontend_stack;
@@ -107,14 +114,20 @@ questions()
             importAlias,
             frontendDevDependencies
           );
-        } else if (frontendStack === "React") {
-        } else if (frontendStack === "Vue") {
         } else if (frontendStack === "Angular") {
         } else {
+          const template = utils.findViteTemplate(frontendStack, isTypescript);
+
+          createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
         }
 
         if (backendStack === "Express.js") {
-          createNodeApp(backendName, ["express", "dotenv", ...answers.additional_backend_packages, answers.database], backendDevDependencies, isTypescript);
+          createNodeApp(
+            backendName,
+            ["express", "dotenv", "cors", ...answers.additional_backend_packages, answers.database],
+            backendDevDependencies,
+            isTypescript
+          );
         }
       }
     }
@@ -140,12 +153,22 @@ function createNextApp(
   if (hasSrcDirectory) command += " --src-dir";
   command += " --import-alias " + importAlias;
 
-  shell.exec(command);
+  console.log("Installing frontend dependencies...");
+  shell.exec(command, { silent: true });
 
   shell.cd(frontendName);
+
   if (devDependencies.length > 0) {
-    shell.exec("npm install --save-dev " + devDependencies.join(" "));
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: devDependencies.length,
+      width: 20,
+    });
+    devDependencies.forEach((dependency) => {
+      shell.exec("npm install --save-dev " + dependency, { silent: true });
+      bar.tick();
+    });
   }
+
   shell.cd("..");
 }
 
@@ -154,11 +177,35 @@ function createViteApp(frontendName: string, template: string, dependencies: Arr
   let command = `npm create vite@latest -y ${frontendName}`;
   npmVersion > 7 ? (command += ` -- --template ${template}`) : ` --template ${template}`;
 
-  shell.exec(command);
+  shell.exec(command, { silent: true });
+
   shell.cd(frontendName);
-  shell.exec("npm install");
-  if (dependencies.length > 0) shell.exec("npm install --save " + dependencies.join(" "));
-  if (devDependencies.length > 0) shell.exec("npm install --save-dev " + devDependencies.join(" "));
+
+  console.log("Installing frontend dependencies...");
+  shell.exec("npm install", { silent: true });
+
+  if (dependencies.length > 0) {
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: devDependencies.length,
+      width: 20,
+    });
+
+    dependencies.forEach((dependency) => {
+      shell.exec("npm install --save " + dependency, { silent: true });
+      bar.tick();
+    });
+  }
+  if (devDependencies.length > 0) {
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: devDependencies.length,
+      width: 20,
+    });
+
+    devDependencies.forEach((dependency) => {
+      shell.exec("npm install --save-dev " + dependency, { silent: true });
+      bar.tick();
+    });
+  }
 
   shell.cd("..");
 }
@@ -168,18 +215,45 @@ function createAngularApp(frontendName: string) {}
 function createNodeApp(backendName: string, dependencies: Array<string>, devDependencies: Array<string>, hasTypescript: boolean) {
   shell.mkdir(backendName);
   shell.cd(backendName);
-  shell.exec("npm init -y");
+  shell.exec("npm init -y", { silent: true });
 
-  if (dependencies.includes("dotenv")) fs.writeFileSync(".env", "PORT=4000");
-  if (dependencies.length > 0) shell.exec("npm install --save " + dependencies.join(" "));
-  if (devDependencies.length > 0) shell.exec("npm install --save-dev " + devDependencies.join(" "));
+  console.log("Installing backend dependencies...");
+  if (dependencies.includes("dotenv")) fs.writeFileSync(".env", "PORT=4000\nMONGO_CONNECTION_STRING=<mongo_connection_string>");
+  if (dependencies.length > 0) {
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: dependencies.length,
+      width: 20,
+    });
+
+    dependencies.forEach((dependency) => {
+      shell.exec("npm install --save " + dependency, { silent: true });
+      bar.tick();
+    });
+  }
+  if (devDependencies.length > 0) {
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: devDependencies.length,
+      width: 20,
+    });
+
+    devDependencies.forEach((dependency) => {
+      shell.exec("npm install --save-dev " + dependency, { silent: true });
+      bar.tick();
+    });
+  }
 
   if (hasTypescript) {
-    let typesModules = "";
-    dependencies.forEach((dependency) => {
-      typesModules += " @types/" + dependency;
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: dependencies.length + 1,
+      width: 20,
     });
-    shell.exec("npm install --save-dev " + "typescript @types/node" + typesModules);
+
+    shell.exec("npm install --save-dev typescript @types/node", { silent: true });
+    bar.tick();
+    dependencies.forEach((dependency) => {
+      shell.exec("npm install --save-dev @types/" + dependency, { silent: true });
+      bar.tick();
+    });
     shell.mkdir("src");
 
     fs.writeFileSync(
