@@ -1,12 +1,12 @@
 #! /usr/bin/env node
 
 import * as utils from "./utils.js";
-import yargs from "yargs";
-import chalk from "chalk";
-import { hideBin } from "yargs/helpers";
 import { questions } from "./questions.js";
 import shell from "shelljs";
 import fs from "fs";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const npmVersion = parseFloat(shell.exec("npm -v", { silent: true }).stdout.trim());
 
@@ -19,32 +19,39 @@ questions()
     const stack = answers.stack;
     const isTypescript = language === "typescript";
 
-    // console.log(shell.pwd().toString());
-
     // project setup
-    shell.mkdir("p1");
-    shell.cd(projectName);
-
     const frontendName = `${projectName}-frontend`;
     const backendName = `${projectName}-backend`;
 
-    const backendDevDependencies: Array<string> = ["nodemon"];
+    let backendDevDependencies: Array<string> = ["nodemon"];
+    if (answers.backend_testing_confirm) {
+      // parse pacakges for testing devDependencies
+      const testingLibraries = utils.findTestingLibraries(answers.backend_testing_framework);
+      backendDevDependencies = [...backendDevDependencies, ...testingLibraries];
+    }
+
+    let frontendDevDependencies: Array<string> = [];
+    if (answers.frontend_testing_confirm) {
+      // parse pacakges for testing devDependencies
+      const testingLibraries = utils.findTestingLibraries(answers.frontend_testing_framework);
+      frontendDevDependencies = [...frontendDevDependencies, ...testingLibraries];
+    }
 
     if (stack === "MEAN Stack") {
       createAngularApp(frontendName);
-      createNodeApp(backendName, ["express", ...answers.additional_backend_packages], backendDevDependencies);
+      createNodeApp(backendName, ["express", "mongoose", "dotenv", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else if (stack === "MERN Stack") {
       const frontendStack = utils.findFrontendFramework(stack);
       const template = utils.findViteTemplate(frontendStack, isTypescript);
 
-      createViteApp(frontendName, template, [...answers.additional_frontend_packages], []);
-      createNodeApp(backendName, ["express", ...answers.additional_backend_packages], backendDevDependencies);
+      createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
+      createNodeApp(backendName, ["express", "mongoose", "dotenv", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else if (stack === "MEVN Stack") {
       const frontendStack = utils.findFrontendFramework(stack);
       const template = utils.findViteTemplate(frontendStack, isTypescript);
 
-      createViteApp(frontendName, template, [...answers.additional_frontend_packages], []);
-      createNodeApp(backendName, ["express", ...answers.additional_backend_packages], backendDevDependencies);
+      createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
+      createNodeApp(backendName, ["express", "mongoose", "dotenv", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else {
       const stackType = answers.stackType;
       if (stackType === "frontend") {
@@ -57,7 +64,16 @@ questions()
           const hasExperimentalAppDirectory = true;
           const importAlias = "@/";
 
-          createNextApp(frontendName, hasTypeScript, hasTailwind, hasEsLint, hasSrcDirectory, hasExperimentalAppDirectory, importAlias);
+          createNextApp(
+            frontendName,
+            hasTypeScript,
+            hasTailwind,
+            hasEsLint,
+            hasSrcDirectory,
+            hasExperimentalAppDirectory,
+            importAlias,
+            frontendDevDependencies
+          );
         } else if (frontendStack === "React") {
         } else if (frontendStack === "Vue") {
         } else if (frontendStack === "Angular") {
@@ -67,7 +83,7 @@ questions()
         const backendStack = answers.backend_stack;
 
         if (backendStack === "Express.js") {
-          createNodeApp(backendName, ["express", ...answers.additional_backend_packages], backendDevDependencies);
+          createNodeApp(backendName, ["express", "dotenv", ...answers.additional_backend_packages, answers.database], backendDevDependencies, isTypescript);
         }
       } else {
         const frontendStack = answers.frontend_stack;
@@ -81,7 +97,16 @@ questions()
           const hasExperimentalAppDirectory = true;
           const importAlias = "@/";
 
-          createNextApp(frontendName, hasTypeScript, hasTailwind, hasEsLint, hasSrcDirectory, hasExperimentalAppDirectory, importAlias);
+          createNextApp(
+            frontendName,
+            hasTypeScript,
+            hasTailwind,
+            hasEsLint,
+            hasSrcDirectory,
+            hasExperimentalAppDirectory,
+            importAlias,
+            frontendDevDependencies
+          );
         } else if (frontendStack === "React") {
         } else if (frontendStack === "Vue") {
         } else if (frontendStack === "Angular") {
@@ -89,16 +114,12 @@ questions()
         }
 
         if (backendStack === "Express.js") {
-          createNodeApp(backendName, ["express", ...answers.additional_backend_packages], backendDevDependencies);
+          createNodeApp(backendName, ["express", "dotenv", ...answers.additional_backend_packages, answers.database], backendDevDependencies, isTypescript);
         }
       }
     }
   })
   .catch((err) => console.log(err));
-
-function init(projectName: string, language: string, stack: string, backendDependencies: Array<string>, frontendDependencies: Array<string>) {
-  // const backendDependencies: Array<string> = ["cors", "jsonwebtoken", "multer", "express"];
-}
 
 function createNextApp(
   frontendName: string,
@@ -107,7 +128,8 @@ function createNextApp(
   hasEsLint: boolean,
   hasExperimentalAppDirectory: boolean,
   hasSrcDirectory: boolean,
-  importAlias: string
+  importAlias: string,
+  devDependencies: Array<string>
 ) {
   let command = `npx create-next-app@latest ${frontendName}`;
 
@@ -119,6 +141,12 @@ function createNextApp(
   command += " --import-alias " + importAlias;
 
   shell.exec(command);
+
+  shell.cd(frontendName);
+  if (devDependencies.length > 0) {
+    shell.exec("npm install --save-dev " + devDependencies.join(" "));
+  }
+  shell.cd("..");
 }
 
 function createViteApp(frontendName: string, template: string, dependencies: Array<string>, devDependencies: Array<string>) {
@@ -137,12 +165,53 @@ function createViteApp(frontendName: string, template: string, dependencies: Arr
 
 function createAngularApp(frontendName: string) {}
 
-function createNodeApp(backendName: string, dependencies: Array<string>, devDependencies: Array<string>) {
+function createNodeApp(backendName: string, dependencies: Array<string>, devDependencies: Array<string>, hasTypescript: boolean) {
   shell.mkdir(backendName);
   shell.cd(backendName);
   shell.exec("npm init -y");
+
+  if (dependencies.includes("dotenv")) fs.writeFileSync(".env", "PORT=4000");
   if (dependencies.length > 0) shell.exec("npm install --save " + dependencies.join(" "));
   if (devDependencies.length > 0) shell.exec("npm install --save-dev " + devDependencies.join(" "));
+
+  if (hasTypescript) {
+    let typesModules = "";
+    dependencies.forEach((dependency) => {
+      typesModules += " @types/" + dependency;
+    });
+    shell.exec("npm install --save-dev " + "typescript @types/node" + typesModules);
+    shell.mkdir("src");
+
+    fs.writeFileSync(
+      "tsconfig.json",
+      JSON.stringify(
+        {
+          compilerOptions: {
+            module: "Node16",
+            moduleResolution: "node16",
+            target: "ES2020",
+            outDir: "dist",
+            strict: true,
+            declaration: true,
+            esModuleInterop: true,
+            allowSyntheticDefaultImports: true,
+          },
+          include: ["src/**/*"],
+          exclude: ["node_modules", "**/tests/*"],
+        },
+        null,
+        2
+      )
+    );
+
+    // create index.ts
+    const boilerPlate = fs.readFileSync(path.join(__dirname, "./boilerplates/expressts.txt"));
+    fs.writeFileSync(`${shell.pwd().toString()}/src/index.ts`, boilerPlate);
+  } else {
+    // create index.js
+    const boilerPlate = fs.readFileSync(path.join(__dirname, "./boilerplates/expressjs.txt"));
+    fs.writeFileSync(`${shell.pwd().toString()}/index.js`, boilerPlate);
+  }
 
   shell.cd("..");
 }

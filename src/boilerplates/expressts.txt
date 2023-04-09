@@ -1,0 +1,37 @@
+import express, { Application, Request, Response } from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const app: Application = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.static('public'));
+app.use(cors());
+
+// Routes
+app.get('/', (req: Request, res: Response) => {
+  res.send('Hello, world!');
+});
+
+// Database
+mongoose.connect('mongodb://localhost/my-app', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+const db = mongoose.connection;
+db.on('error', (error: Error) => {
+  console.error('connection error:', error);
+});
+db.once('open', () => {
+  console.log('Connected to MongoDB');
+});
+
+// Server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server started on port ${port}`);
+});
+
