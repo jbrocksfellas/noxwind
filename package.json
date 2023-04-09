@@ -1,6 +1,6 @@
 {
   "name": "noxwind",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A CLI tool to setup Full-Stack application faster",
   "exports": "./bin/index.js",
   "type": "module",
@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "concurrently \"yarn tsc --watch\" \"nodemon bin/index.js\"",
     "start": "node bin/index.js",
+    "copyfiles": "copyfiles -u 1 \"src/boilerplates/*\" bin/",
     "build": "yarn tsc",
     "prepare": "yarn run build"
   },
@@ -21,14 +22,13 @@
     "@types/shelljs": "^0.8.11",
     "@types/yargs": "^17.0.24",
     "concurrently": "^8.0.1",
+    "copyfiles": "^2.4.1",
     "nodemon": "^2.0.22",
     "typescript": "^5.0.3"
   },
   "dependencies": {
-    "chalk": "4.1.2",
     "inquirer": "8.0.0",
-    "shelljs": "^0.8.5",
-    "yargs": "^17.7.1"
+    "shelljs": "^0.8.5"
   },
   "author": "Gaurav Singh <jbrocksfellas@gmail.com>",
   "keywords": [

@@ -65,79 +65,80 @@ const questions = async function () {
         when(answers) {
           return answers.backend_stack;
         },
-        choices: ["mongoose", "sequelize", "knex", "mongodb", "node-postgres", "firebase-admin", "None"],
+        choices: ["mongoose"],
+        // "sequelize", "knex", "mongodb", "node-postgres", "firebase-admin", "None"
       },
-      {
-        type: "confirm",
-        name: "secondary_database_confirm",
-        message: "Do you want to use a secondary database?",
-        when(answers) {
-          return answers.database;
-        },
-      },
-      {
-        type: "list",
-        name: "secondary_database",
-        message: "Select the secondary database driver",
-        when(answers) {
-          return answers.secondary_database_confirm;
-        },
-        choices: ["Redis", "None"],
-      },
-      {
-        type: "confirm",
-        name: "backend_auth_confirm",
-        message: "Do you want to use an authentication library for backend?",
-        when(answers) {
-          return answers.database;
-        },
-      },
-      {
-        type: "list",
-        name: "backend_auth_library",
-        message: "Select your backend auth library",
-        when(answers) {
-          return answers.backend_auth_confirm;
-        },
-        choices: ["passport", "jsonwebtoken"],
-      },
-      {
-        type: "confirm",
-        name: "react_auth_confirm",
-        message: "Do you want to use an authentication library for React?",
-        when(answers) {
-          const mernStack = answers.stack === "MERN Stack";
-          const react = answers.frontend_stack === "React";
-          return mernStack || react;
-        },
-      },
-      {
-        type: "list",
-        name: "react_auth_library",
-        message: "Select your react auth library",
-        when(answers) {
-          return answers.react_auth_confirm;
-        },
-        choices: ["auth0", "firebase"],
-      },
-      {
-        type: "confirm",
-        name: "next_auth_confirm",
-        message: "Do you want to use an authentication library for Next.js?",
-        when(answers) {
-          const nextJs = answers.frontend_stack === "Next.js";
-          return nextJs;
-        },
-      },
-      {
-        type: "list",
-        name: "next_auth_library",
-        message: "Select your next auth library",
-        when(answers) {
-          return answers.next_auth_confirm;
-        },
-        choices: ["next-auth"],
-      },
+      // {
+      //   type: "confirm",
+      //   name: "secondary_database_confirm",
+      //   message: "Do you want to use a secondary database?",
+      //   when(answers) {
+      //     return answers.database;
+      //   },
+      // },
+      // {
+      //   type: "list",
+      //   name: "secondary_database",
+      //   message: "Select the secondary database driver",
+      //   when(answers) {
+      //     return answers.secondary_database_confirm;
+      //   },
+      //   choices: ["Redis", "None"],
+      // },
+      // {
+      //   type: "confirm",
+      //   name: "backend_auth_confirm",
+      //   message: "Do you want to use an authentication library for backend?",
+      //   when(answers) {
+      //     return answers.database;
+      //   },
+      // },
+      // {
+      //   type: "list",
+      //   name: "backend_auth_library",
+      //   message: "Select your backend auth library",
+      //   when(answers) {
+      //     return answers.backend_auth_confirm;
+      //   },
+      //   choices: ["passport", "jsonwebtoken"],
+      // },
+      // {
+      //   type: "confirm",
+      //   name: "react_auth_confirm",
+      //   message: "Do you want to use an authentication library for React?",
+      //   when(answers) {
+      //     const mernStack = answers.stack === "MERN Stack";
+      //     const react = answers.frontend_stack === "React";
+      //     return mernStack || react;
+      //   },
+      // },
+      // {
+      //   type: "list",
+      //   name: "react_auth_library",
+      //   message: "Select your react auth library",
+      //   when(answers) {
+      //     return answers.react_auth_confirm;
+      //   },
+      //   choices: ["auth0", "firebase"],
+      // },
+      // {
+      //   type: "confirm",
+      //   name: "next_auth_confirm",
+      //   message: "Do you want to use an authentication library for Next.js?",
+      //   when(answers) {
+      //     const nextJs = answers.frontend_stack === "Next.js";
+      //     return nextJs;
+      //   },
+      // },
+      // {
+      //   type: "list",
+      //   name: "next_auth_library",
+      //   message: "Select your next auth library",
+      //   when(answers) {
+      //     return answers.next_auth_confirm;
+      //   },
+      //   choices: ["next-auth"],
+      // },
       {
         type: "confirm",
         name: "css_confirm",
@@ -169,14 +170,20 @@ const questions = async function () {
         when(answers) {
           return answers.frontend_testing_confirm;
         },
-        choices: ["Jest", "Jest + Enzyme", "Cypress + Mocha + Chai", "TestCafe + Mocha + Chai", "Karma + Jasmine", "Nightwat.js + Mocha + Chai"],
+        choices: ["Jest", "Jest + Enzyme", "Cypress + Mocha + Chai"],
+        // "TestCafe + Mocha + Chai", "Karma + Jasmine", "Nightwat.js + Mocha + Chai"
       },
       {
         type: "confirm",
         name: "backend_testing_confirm",
         message: "Do you want to use a testing framework for backend?",
         when(answers) {
-          return answers.database;
+          const meanStack = answers.stack === "MEAN Stack";
+          const mernStack = answers.stack === "MERN Stack";
+          const mevnStack = answers.stack === "MEVN Stack";
+          const backendStack = answers.stack_type && answers.stack_type !== "frontend";
+
+          return meanStack || mernStack || mevnStack || backendStack;
         },
       },
       {
@@ -186,13 +193,14 @@ const questions = async function () {
         when(answers) {
           return answers.backend_testing_confirm;
         },
-        choices: ["Mocha + Chai", "Jest", "Mocha + Chai + Supertest", "Mocha + Chai + Sinon", "Cucumber + Gherkin", "AVA + Sinon"],
+        choices: ["Mocha + Chai", "Jest", "Mocha + Chai + Supertest", "Mocha + Chai + Sinon"],
+        // "Cucumber + Gherkin", "AVA + Sinon"
       },
       {
         type: "checkbox",
         name: "additional_frontend_packages",
         message: "Select additional frontend packages",
-        choices: [{ name: "yup" }, { name: "socket.io" }, { name: "axios" }, { name: "rxjs" }],
+        choices: [{ name: "yup" }, { name: "socket.io-client" }, { name: "axios" }, { name: "rxjs" }],
       },
       {
         type: "checkbox",
@@ -207,8 +215,6 @@ const questions = async function () {
           return meanStack || mernStack || mevnStack || backendStack;
         },
         choices: [
-          { name: "cors" },
-          { name: "dotenv" },
           { name: "bcryptjs" },
           { name: "jsonwebtoken" },
           { name: "multer" },
