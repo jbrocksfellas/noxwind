@@ -14,6 +14,18 @@ yarn noxwind
 pnpm noxwind
 ```
 
+In case `npx` doesn't work, Install the package globally and try.
+
+```bash
+npm install -g noxwind
+```
+
+now use the command
+
+```bash
+noxwind
+```
+
 You will be asked for the name of your project, whether you want to create a TypeScript project followed by other important questions to setup a full-stack app in no time.
 
 ### Why use Noxwind?

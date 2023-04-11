@@ -19,6 +19,7 @@ questions()
     const language = answers.language;
     const stack = answers.stack;
     const isTypescript = language === "typescript";
+    const cssFramework = answers.css_framework;
 
     // project setup
     const frontendName = `${projectName}-frontend`;
@@ -39,7 +40,7 @@ questions()
     }
 
     if (stack === "MEAN Stack") {
-      createAngularApp(frontendName);
+      createAngularApp(frontendName, [...answers.additional_frontend_packages], frontendDevDependencies, cssFramework);
       createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else if (stack === "MERN Stack") {
       const frontendStack = utils.findFrontendFramework(stack);
@@ -54,12 +55,12 @@ questions()
       createViteApp(frontendName, template, [...answers.additional_frontend_packages], frontendDevDependencies);
       createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
     } else {
-      const stackType = answers.stackType;
+      const stackType = answers.stack_type;
       if (stackType === "frontend") {
         const frontendStack = answers.frontend_stack;
         if (frontendStack === "Next.js") {
           const hasTypeScript = language === "typescript";
-          const hasTailwind = true;
+          const hasTailwind = cssFramework === "tailwindcss";
           const hasEsLint = true;
           const hasSrcDirectory = true;
           const hasExperimentalAppDirectory = true;
@@ -76,6 +77,8 @@ questions()
             frontendDevDependencies
           );
         } else if (frontendStack === "Angular") {
+          createAngularApp(frontendName, [...answers.additional_frontend_packages], frontendDevDependencies, cssFramework);
+          createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
         } else {
           const template = utils.findViteTemplate(frontendStack, isTypescript);
 
@@ -98,7 +101,7 @@ questions()
 
         if (frontendStack === "Next.js") {
           const hasTypeScript = language === "typescript";
-          const hasTailwind = true;
+          const hasTailwind = cssFramework === "tailwindcss";
           const hasEsLint = true;
           const hasSrcDirectory = true;
           const hasExperimentalAppDirectory = true;
@@ -115,6 +118,8 @@ questions()
             frontendDevDependencies
           );
         } else if (frontendStack === "Angular") {
+          createAngularApp(frontendName, [...answers.additional_frontend_packages], frontendDevDependencies, cssFramework);
+          createNodeApp(backendName, ["express", "mongoose", "dotenv", "cors", ...answers.additional_backend_packages], backendDevDependencies, isTypescript);
         } else {
           const template = utils.findViteTemplate(frontendStack, isTypescript);
 
@@ -154,7 +159,13 @@ function createNextApp(
   command += " --import-alias " + importAlias;
 
   console.log("Installing frontend dependencies...");
+  const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+    total: 2,
+    width: 20,
+  });
+  bar.tick();
   shell.exec(command, { silent: true });
+  bar.tick();
 
   shell.cd(frontendName);
 
@@ -210,7 +221,47 @@ function createViteApp(frontendName: string, template: string, dependencies: Arr
   shell.cd("..");
 }
 
-function createAngularApp(frontendName: string) {}
+function createAngularApp(frontendName: string, dependencies: Array<string>, devDependencies: Array<string>, cssFramework: string) {
+  if (!shell.which("ng")) {
+    console.log("Installing angular cli...");
+    shell.exec("npm install -g @angular/cli", { silent: true });
+  }
+
+  console.log("Installing frontend dependencies...");
+  // CSS, SCSS, Sass, Less
+  const availableCssWithAngular = ["CSS", "SCSS", "Sass", "Less"];
+  shell.exec(`echo No | echo Yes | echo ${availableCssWithAngular.includes(cssFramework) ? cssFramework : "CSS"} | ng new ${frontendName}`);
+
+  shell.cd(frontendName);
+
+  if (cssFramework === "tailwindcss") {
+    // setup tailwind
+  }
+
+  if (dependencies.length > 0) {
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: dependencies.length,
+      width: 20,
+    });
+    dependencies.forEach((dependency) => {
+      shell.exec("npm install --save " + dependency, { silent: true });
+      bar.tick();
+    });
+  }
+
+  if (devDependencies.length > 0) {
+    const bar = new ProgressBar("[:bar] :current/:total :percent :etas", {
+      total: devDependencies.length,
+      width: 20,
+    });
+    devDependencies.forEach((dependency) => {
+      shell.exec("npm install --save-dev " + dependency, { silent: true });
+      bar.tick();
+    });
+  }
+
+  shell.cd("..");
+}
 
 function createNodeApp(backendName: string, dependencies: Array<string>, devDependencies: Array<string>, hasTypescript: boolean) {
   shell.mkdir(backendName);
@@ -248,7 +299,7 @@ function createNodeApp(backendName: string, dependencies: Array<string>, devDepe
       width: 20,
     });
 
-    shell.exec("npm install --save-dev typescript @types/node", { silent: true });
+    shell.exec("npm install --save-dev typescript @types/node concurrently", { silent: true });
     bar.tick();
     dependencies.forEach((dependency) => {
       shell.exec("npm install --save-dev @types/" + dependency, { silent: true });
@@ -281,13 +332,37 @@ function createNodeApp(backendName: string, dependencies: Array<string>, devDepe
     // create index.ts
     const boilerPlate = fs.readFileSync(path.join(__dirname, "./boilerplates/expressts.txt"));
     fs.writeFileSync(`${shell.pwd().toString()}/src/index.ts`, boilerPlate);
+
+    const scripts = {
+      start: "nodemon dist/index.js",
+      build: "npx tsc",
+      dev: 'npm run build && concurrently "npx tsc --watch" "nodemon dist/index.js"',
+    };
+    if (devDependencies.includes("mocha")) (<any>scripts).test = "mocha";
+    if (dependencies.includes("jest")) (<any>scripts).test = "jest";
+    addScriptsInPackageJson(`${shell.pwd().toString()}/package.json`, scripts);
   } else {
     // create index.js
     const boilerPlate = fs.readFileSync(path.join(__dirname, "./boilerplates/expressjs.txt"));
     fs.writeFileSync(`${shell.pwd().toString()}/index.js`, boilerPlate);
+
+    const scripts = {
+      start: "nodemon index.js",
+    };
+    if (devDependencies.includes("mocha")) (<any>scripts).test = "mocha";
+    if (dependencies.includes("jest")) (<any>scripts).test = "jest";
+    addScriptsInPackageJson(`${shell.pwd().toString()}/package.json`, scripts);
   }
 
   shell.cd("..");
+}
+
+function addScriptsInPackageJson(packageJsonPath: string, scripts: any): void {
+  // add scripts
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+  packageJson.scripts = scripts;
+
+  fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 }
 
 function modifyTailwindConfig(filePath: string) {

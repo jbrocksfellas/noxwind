@@ -144,9 +144,12 @@ const questions = async function () {
         name: "css_confirm",
         message: "Do you want to use a CSS framework?",
         when(answers) {
-          const nextJs = answers.frontend_stack === "Next.js";
+          const meanStack = answers.stack === "MEAN Stack";
+          const mernStack = answers.stack === "MERN Stack";
+          const mevnStack = answers.stack === "MEVN Stack";
+          const notBackend = answers.stack_type && answers.stack_type !== "backend";
 
-          return nextJs;
+          return meanStack || mernStack || mevnStack || notBackend;
         },
       },
       {
@@ -156,19 +159,19 @@ const questions = async function () {
         when(answers) {
           return answers.css_confirm;
         },
-        choices: ["tailwindcss"],
+        choices: [{ name: "Tailwind CSS", value: "tailwindcss" }, "SCSS"],
+        // styled components, bootstrap, ant design, material ui, tailwind css, scss, foundation, bulma, materialize
       },
       {
         type: "confirm",
         name: "frontend_testing_confirm",
         message: "Do you want to use a testing framework for frontend?",
         when(answers) {
-          const meanStack = answers.stack === "MEAN Stack";
           const mernStack = answers.stack === "MERN Stack";
           const mevnStack = answers.stack === "MEVN Stack";
           const notBackend = answers.stack_type && answers.stack_type !== "backend";
 
-          return meanStack || mernStack || mevnStack || notBackend;
+          return mernStack || mevnStack || notBackend;
         },
       },
       {
