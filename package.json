@@ -1,6 +1,6 @@
 {
   "name": "noxwind",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A CLI tool to setup Full-Stack application faster",
   "exports": "./bin/index.js",
   "type": "module",
